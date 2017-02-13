@@ -322,8 +322,8 @@ func NewKlient(conf *KlientConfig) (*Klient, error) {
 	machinesOpts := &machinegroup.GroupOpts{
 		Storage:         storage.NewEncodingStorage(db, []byte("machines")),
 		Builder:         mclient.NewKiteBuilder(k),
-		NotifyBuilder:   silent.SilentBuilder{},
-		SyncBuilder:     discard.DiscardBuilder{},
+		NotifyBuilder:   silent.Builder{},
+		SyncBuilder:     discard.Builder{},
 		DynAddrInterval: 2 * time.Second,
 		PingInterval:    15 * time.Second,
 		WorkDir:         cfg.KodingCacheHome(),
