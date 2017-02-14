@@ -1,13 +1,84 @@
 package indextest
 
 import (
+	"errors"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
+
+	"koding/klient/machine/index"
+
+	"github.com/djherbis/times"
 )
+
+// ComparePath is a helper function that compares the content of two provided
+// directories. The detected changes will be returned as index change slice.
+func ComparePath(rootA, rootB string) (index.ChangeSlice, error) {
+	idx, err := index.NewIndexFiles(rootA)
+	if err != nil {
+		return nil, err
+	}
+
+	return idx.ComparePath(rootB), nil
+}
+
+// GenerateMirrorTrees generates two identical file trees using GenerateTree
+// helper function. This function ensures that ComparePath of two generated
+// directories will not produce any index changes.
+func GenerateMirrorTrees(filetree map[string]int64) (string, string, func(), error) {
+	rootA, cleanA, err := GenerateTree(filetree)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	rootB, cleanB, err := GenerateTree(filetree)
+	if err != nil {
+		cleanA()
+		return "", "", nil, err
+	}
+
+	clean := func() {
+		cleanB()
+		cleanA()
+	}
+
+	for path := range filetree {
+		if err := makeSimilarTimes(rootA, rootB, path); err != nil {
+			clean()
+			return "", "", nil, err
+		}
+	}
+
+	cs, err := ComparePath(rootA, rootB)
+	if len(cs) != 0 {
+		err = errors.New("generated paths are not identical")
+	}
+
+	if err != nil {
+		clean()
+		return "", "", nil, err
+	}
+
+	return rootA, rootB, clean, nil
+}
+
+func makeSimilarTimes(rootA, rootB, path string) error {
+	t, err := times.Stat(filepath.Join(rootA, path))
+	if err != nil {
+		return err
+	}
+
+	if err := os.Chtimes(filepath.Join(rootB, path), t.AccessTime(), t.ModTime()); err != nil {
+		return err
+	}
+
+	// Changing mtime also modifies ctime. Files stored inside rootA may have
+	// different mtime and ctime values so it's needed to Chtimes them as well.
+	return os.Chtimes(filepath.Join(rootA, path), t.AccessTime(), t.ModTime())
+}
 
 // GenerateTree generates a file tree inside a temporary directory. The filetree
 // map has relative paths as keys and file size as value. Clean function must
