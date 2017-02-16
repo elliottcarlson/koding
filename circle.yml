@@ -92,6 +92,10 @@ stages:
         paths:
           - client/.happypack
 
+      - type: shell
+        name: Go Meta Linter
+        command: ./run exec scripts/gometalinter.sh
+
       - type: cache-restore
         keys:
           - go-{{ .Branch }}-{{ .Revision }}
