@@ -19,13 +19,14 @@ func SyncLocal(rootA, rootB string, dir index.ChangeMeta, s msync.Syncer) (conte
 		return nil, nil, fmt.Errorf("invalid change type: %v", dir)
 	}
 
-	cs, err := indextest.ComparePath(rootA, rootB)
+	cs, err := indextest.Compare(rootA, rootB)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var evs []*msync.Event
 	for _, c := range cs {
+		c = index.NewChange(c.Path(), c.Meta()|dir)
 		evs = append(evs, msync.NewEvent(context.Background(), nil, c))
 	}
 

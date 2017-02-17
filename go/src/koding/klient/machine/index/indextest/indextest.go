@@ -14,15 +14,15 @@ import (
 	"github.com/djherbis/times"
 )
 
-// ComparePath is a helper function that compares the content of two provided
+// Compare is a helper function that compares the content of two provided
 // directories. The detected changes will be returned as index change slice.
-func ComparePath(rootA, rootB string) (index.ChangeSlice, error) {
+func Compare(rootA, rootB string) (index.ChangeSlice, error) {
 	idx, err := index.NewIndexFiles(rootA)
 	if err != nil {
 		return nil, err
 	}
 
-	return idx.ComparePath(rootB), nil
+	return idx.Compare(rootB), nil
 }
 
 // GenerateMirrorTrees generates two identical file trees using GenerateTree
@@ -52,7 +52,7 @@ func GenerateMirrorTrees(filetree map[string]int64) (string, string, func(), err
 		}
 	}
 
-	cs, err := ComparePath(rootA, rootB)
+	cs, err := Compare(rootA, rootB)
 	if len(cs) != 0 {
 		err = errors.New("generated paths are not identical")
 	}
