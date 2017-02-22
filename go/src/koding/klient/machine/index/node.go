@@ -365,6 +365,10 @@ func (nd *Node) shallowCopy() *Node {
 }
 
 func split(path string) (string, string) {
+	if path == "" {
+		return "", ""
+	}
+
 	if path[0] == '/' {
 		path = path[1:]
 	}

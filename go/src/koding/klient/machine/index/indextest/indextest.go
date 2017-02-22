@@ -1,7 +1,7 @@
 package indextest
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -55,7 +55,7 @@ func GenerateMirrorTrees(filetree map[string]int64) (string, string, func(), err
 
 	cs, err := Compare(rootA, rootB)
 	if len(cs) != 0 {
-		err = errors.New("generated paths are not identical")
+		err = fmt.Errorf("generated paths are not identical: %v", cs)
 	}
 
 	if err != nil {
