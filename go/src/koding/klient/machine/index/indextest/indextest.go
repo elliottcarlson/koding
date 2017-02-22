@@ -16,13 +16,14 @@ import (
 
 // Compare is a helper function that compares the content of two provided
 // directories. The detected changes will be returned as index change slice.
+// First argument is treated as base index data.
 func Compare(rootA, rootB string) (index.ChangeSlice, error) {
 	idx, err := index.NewIndexFiles(rootA)
 	if err != nil {
 		return nil, err
 	}
 
-	return idx.Compare(rootB), nil
+	return idx.Merge(rootB), nil
 }
 
 // GenerateMirrorTrees generates two identical file trees using GenerateTree

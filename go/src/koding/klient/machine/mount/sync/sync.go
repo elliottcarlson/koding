@@ -22,11 +22,15 @@ import (
 // IndexFileName is a file name of managed directory index.
 const IndexFileName = "index"
 
+// IndexSyncFunc is a function that must be called by syncer immediately after
+// synchronization process. It is used to update index.
+type IndexSyncFunc func(*index.Change)
+
 // BuildOpts represents the context that can be used by external syncers to
 // build their own type. Built syncer should update the index after syncing and
 // manage received events.
 type BuildOpts struct {
-	Index *index.Index // known state of synchronized index.
+	IndexSyncFunc IndexSyncFunc // callback used to update index.
 }
 
 // Builder represents a factory method which external syncers must implement in
@@ -178,7 +182,7 @@ func NewSync(mountID mount.ID, m mount.Mount, opts SyncOpts) (*Sync, error) {
 		MountID:  mountID,
 		Mount:    m,
 		Cache:    s.a,
-		CacheDir: filepath.Join(s.opts.WorkDir, "data"),
+		CacheDir: cacheDir,
 		DiskInfo: s.diskInfo(),
 		Index:    s.idx,
 	})
@@ -188,7 +192,7 @@ func NewSync(mountID mount.ID, m mount.Mount, opts SyncOpts) (*Sync, error) {
 
 	// Create file synchronization object.
 	s.s, err = opts.SyncBuilder.Build(&BuildOpts{
-		Index: s.idx,
+		IndexSyncFunc: s.indexSync(),
 	})
 	if err != nil {
 		return nil, nonil(err, s.n.Close(), s.a.Close())
@@ -262,6 +266,14 @@ func (s *Sync) diskInfo() notify.DiskInfo {
 
 	return func() (fs.DiskInfo, error) {
 		return cached.DiskInfo(s.m.RemotePath)
+	}
+}
+
+func (s *Sync) indexSync() IndexSyncFunc {
+	cacheDir := filepath.Join(s.opts.WorkDir, "data")
+
+	return func(c *index.Change) {
+		s.idx.Sync(cacheDir, c)
 	}
 }
 
