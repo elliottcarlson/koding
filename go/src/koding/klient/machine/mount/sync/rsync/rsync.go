@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"fmt"
 	"koding/klient/machine/client"
 	"koding/klient/machine/index"
 	msync "koding/klient/machine/mount/sync"
@@ -41,6 +42,7 @@ func (e *Event) Exec() error {
 	}
 
 	change := e.ev.Change()
+	fmt.Println("ARGS: ->", e.makeArgs(addr.Value, change))
 	err = e.parent.Cmd(e.ev.Context(), e.makeArgs(addr.Value, change)...).Run()
 	e.parent.indexSync(change)
 

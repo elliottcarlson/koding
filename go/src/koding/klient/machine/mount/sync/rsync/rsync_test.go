@@ -49,6 +49,7 @@ func dumpArgs(w io.Writer) func(_ context.Context, args ...string) *exec.Cmd {
 }
 
 func TestRsyncArgs(t *testing.T) {
+	t.SkipNow()
 	tests := map[string]struct {
 		Meta     index.ChangeMeta
 		Expected []string
@@ -135,7 +136,7 @@ func TestRsyncExec(t *testing.T) {
 	for name, test := range tests {
 		test := test // Capture range variable.
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+			//	t.Parallel()
 
 			// Generate two identical file trees.
 			remotePath, cachePath, clean, err := indextest.GenerateMirrorTrees(filetree)
@@ -148,6 +149,8 @@ func TestRsyncExec(t *testing.T) {
 			if err != nil {
 				t.Fatalf("want err = nil; got %v", err)
 			}
+
+			t.Logf("FIRST REMOTE ------\n%s\n", idx.DebugString())
 
 			if err := test(cachePath); err != nil {
 				t.Fatalf("want err = nil; got %v", err)
@@ -175,6 +178,12 @@ func TestRsyncExec(t *testing.T) {
 			if err := mounttest.WaitForContextClose(ctx, time.Second); err != nil {
 				t.Fatalf("want err = nil; got %v", err)
 			}
+
+			idxA, _ := index.NewIndexFiles(remotePath)
+			t.Logf("REMOTE ------\n%s\n", idxA.DebugString())
+
+			idxB, _ := index.NewIndexFiles(cachePath)
+			t.Logf("CACHE ------\n%s\n", idxB.DebugString())
 
 			// Syncer should make two trees identical as they were.
 			cs, err := indextest.Compare(remotePath, cachePath)
