@@ -139,25 +139,30 @@ func TestRsyncExec(t *testing.T) {
 			//	t.Parallel()
 
 			// Generate two identical file trees.
+			now := time.Now()
 			remotePath, cachePath, clean, err := indextest.GenerateMirrorTrees(filetree)
 			if err != nil {
 				t.Fatalf("want err = nil; got %v", err)
 			}
 			defer clean()
+			t.Log("GenerateMirrorTrees", time.Since(now))
 
 			idx, err := index.NewIndexFiles(remotePath)
 			if err != nil {
 				t.Fatalf("want err = nil; got %v", err)
 			}
+			t.Log("New index files", time.Since(now))
 
 			t.Logf("FIRST REMOTE ------\n%s\n", idx.DebugString())
 
 			if err := test(cachePath); err != nil {
 				t.Fatalf("want err = nil; got %v", err)
 			}
+			t.Log("FS operation", time.Since(now))
 
 			// Synchronize underlying file-system.
 			indextest.Sync()
+			t.Log("Sync system", time.Since(now))
 
 			opts := &msync.BuildOpts{
 				Mount:    mount.Mount{RemotePath: remotePath},
