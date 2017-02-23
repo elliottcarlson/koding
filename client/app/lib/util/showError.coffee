@@ -1,46 +1,34 @@
 kd = require 'kd'
 
-KDNotificationView = kd.NotificationView
 
-fn = (err, messages) ->
+fn = (err) ->
   return no  unless err
 
   if Array.isArray err
     @fn er  for er in err
     return err.length
 
+  content = 'An error occured!'
   if 'string' is typeof err
-    message = err
-    err     = { message }
+    content = err
+    err = {}
+  else if 'object' is typeof err
+    content = err.message  if err.message
 
-  defaultMessages =
-    AccessDenied : 'Permission denied'
-    KodingError  : 'Something went wrong'
 
-  err.name or= 'KodingError'
-  content    = ''
+  err.type                   ?= 'default'
+  err.content                ?= content
+  err.dismissible            ?= yes
+  err.duration               ?= 3000
+  err.primaryButtonTitle     ?= null
+  err.onPrimaryButtonClick   ?= null
+  err.secondaryButtonTitle   ?= null
+  err.onSecondaryButtonClick ?= null
 
-  if messages
-    errMessage = messages[err.name] or messages.KodingError \
-                                    or defaultMessages.KodingError
-  messages or= defaultMessages
-  errMessage or= err.message or messages[err.name] or messages.KodingError
+  { addNotification } = kd.singletons.notificationViewController
+  addNotification err
 
-  if errMessage?
-    if 'string' is typeof errMessage
-      title = errMessage
-    else if errMessage.title? and errMessage.content?
-      { title, content } = errMessage
-
-  duration = errMessage.duration or 2500
-  title  or= err.message
-
-  new KDNotificationView { title, content, duration }
-
-  unless err.name is 'AccessDenied'
-    kd.warn 'KodingError:', err.message
-    kd.error err
-  err?
+  yes
 
 
 module.exports = fn
