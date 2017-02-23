@@ -17,13 +17,23 @@ import (
 // Compare is a helper function that compares the content of two provided
 // directories. The detected changes will be returned as index change slice.
 // First argument is treated as base index data.
-func Compare(rootA, rootB string) (index.ChangeSlice, error) {
+func Compare(rootA, rootB string) (cs index.ChangeSlice, err error) {
 	idx, err := index.NewIndexFiles(rootA)
 	if err != nil {
 		return nil, err
 	}
 
-	return idx.Merge(rootB), nil
+	// Merge ony adds files so it will make remote add instead of local delete
+	// we need to fix this.
+	mra := index.ChangeMetaAdd | index.ChangeMetaRemote
+	for _, c := range idx.Merge(rootB) {
+		if c.Meta()&mra == mra {
+			c = index.NewChange(c.Path(), index.ChangeMetaRemove)
+		}
+		cs = append(cs, c)
+	}
+
+	return cs, nil
 }
 
 // GenerateMirrorTrees generates two identical file trees using GenerateTree

@@ -32,7 +32,7 @@ func SyncLocal(s msync.Syncer, rootA, rootB string, dir index.ChangeMeta) (conte
 	}
 
 	var (
-		evC = make(chan *msync.Event, 1)
+		evC = make(chan *msync.Event)
 		exC = s.ExecStream(evC)
 	)
 
